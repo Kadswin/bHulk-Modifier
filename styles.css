@@ -1,8 +1,26 @@
-/*
+/*menu section Header h2 and h3 */
+.bhulk-header {
+		margin-bottom: 0.5em !important;
+	}
+.bhulk-subheader {
+  margin-bottom: 0.4em !important;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* checkboxes -MS /radios-exclusion style */
+.bhulk-check {
+  margin-right: 0.4em;
+  margin-left: 1em;
+  transform: translateY(-2px) scale(0.95);
+  vertical-align: middle;
+}
+.bhulk-label-check {
+  margin-right: 1em;
+  /*font-size: 1em;*/
+}
 
-If your plugin does not need CSS, delete this file.
 
-*/
+/*confirm nbutton on its seaprate line */
+.bhulk-confirm-button {
+  margin-top: 1em !important;
+  display: block; /* ensures it takes its own line */
+}
