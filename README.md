@@ -10,11 +10,11 @@ The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definiti
 " 
 
 This plugin comes with a basic funcitonality allowing you to apply the current open note as a tempalte to insert in all notes of selected folders and alloows you to prevent modifications to specific notes (e.g. your current template).
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+To come:
+- Affect block of the note: frontmatter, template, TemplateR template
+- Method of insertion: before, after, overwrite
+- Affected folders
+- Preserved notes selection
 
 ## First time developing plugins?
 
