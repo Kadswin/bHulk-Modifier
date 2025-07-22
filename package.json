@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "The bHulk Modifier",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Allows to bulk modify Notes in the vault with TemplateR templates",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

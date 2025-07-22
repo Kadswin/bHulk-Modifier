@@ -1,11 +1,15 @@
-# Obsidian Sample Plugin
+# The bHulk Modifier
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Currently under development: basic functionality - use at your own risk.
 
+This plugin has one simple intention: it allows you to apply single major changes to multiple notes at onces.
+
+"
 This project uses TypeScript to provide type checking and documentation.
 The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+" 
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
+This plugin comes with a basic funcitonality allowing you to apply the current open note as a tempalte to insert in all notes of selected folders and alloows you to prevent modifications to specific notes (e.g. your current template).
 - Adds a ribbon icon, which shows a Notice when clicked.
 - Adds a command "Open Sample Modal" which opens a Modal.
 - Adds a plugin setting tab to the settings page.
@@ -70,7 +74,6 @@ Quick starting guide for new plugin devs:
 You can include funding URLs where people who use your plugin can financially support it.
 
 The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
 ```json
 {
     "fundingUrl": "https://buymeacoffee.com"

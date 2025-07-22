@@ -1,4 +1,4 @@
-import ("styles.css");
+import ("./styles.css");
 import { Notice, Plugin, TFile } from "obsidian";
 import { hasFrontmatter, findFrontmatterEnd, hasTemplateR, findTemplateREnd } from "./utils/helpers"; //#1.Keep this Update with modifications
 

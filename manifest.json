@@ -2,7 +2,7 @@
 	"id": "The bHulk Modifier",
 	"name": "The bHulk Modifier",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
+	"minAppVersion": "0.1.0",
 	"description": "Allows to bulk modify Notes in the vault with TemplateR templates",
 	"author": "kadswin",
 	"isDesktopOnly": true,
