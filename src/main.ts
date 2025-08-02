@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import { hasFrontmatter, findFrontmatterEnd, hasTemplateR, findTemplateREnd } from "./utils/helpers"; //#1.Keep this Update with modifications
+import { hasFrontmatter, findFrontmatterStart, findFrontmatterEnd, hasTemplateR, findTemplateRStart , findTemplateREnd } from "./utils/helpers"; //#1.Keep this Update with modifications
 import { InsertMethod, AffectedBlock, MethodSelection } from "./utils/types"; // Assuming you have a types file for these enums
 
 // --- Basic prompt modal
@@ -97,73 +97,45 @@ export default class bHulkModifier extends Plugin {
 	const content = await this.app.vault.read(file);
 	let newContent = content;
 
-	// Iterate through selected targets and apply modifications
-	for (const target of targets) {
-		switch (target) {
-			case "frontmatter":
-				if (hasFrontmatter(newContent)) {
-					const insertPos = findFrontmatterEnd(newContent);
-					switch (method) {
-						case "before":
-							newContent = template + "\n" + newContent;
-							break;
-						case "after":
-							newContent = newContent.slice(0, insertPos) + "\n" + template + "\n" + newContent.slice(insertPos);
-							break;
-						case "overwrite":
-							const frontmatterStart = newContent.indexOf("---");
-							newContent =
-								newContent.slice(0, frontmatterStart) +
-								"---\n" +
-								template +
-								"\n---" +
-								newContent.slice(insertPos);
-							break;
-					}
-				} else {
-					// No frontmatter block found, fallback:
-					if (method === "before" || method === "overwrite") {
-						newContent = template + "\n\n" + newContent;
-					} else if (method === "after") {
-						newContent = newContent + "\n\n" + template;
-					}
-				}
-				break;
+		for (const target of targets) {
+			let start = 0;
+			let end = 0;
+			let hasBlock = false;
 
-			case "templater":
-				if (hasTemplateR(newContent)) {
-					const insertPos = findTemplateREnd(newContent);
-					switch (method) {
-						case "before":
-							newContent = template + "\n" + newContent;
-							break;
-						case "after":
-							newContent = newContent.slice(0, insertPos) + "\n" + template + "\n" + newContent.slice(insertPos);
-							break;
-						case "overwrite":
-							// Overwrite TemplateR block - find start/end positions
-							const templateStart = newContent.indexOf("<%");
-							newContent =
-								newContent.slice(0, templateStart) +
-								template +
-								newContent.slice(insertPos);
-							break;
-					}
-				} else {
-					// No TemplateR block found, fallback:
-					if (method === "before" || method === "overwrite") {
-						newContent = template + "\n\n" + newContent;
-					} else if (method === "after") {
-						newContent = newContent + "\n\n" + template;
-					}
-				}
-				break;
+			if (target === "frontmatter") {
+				hasBlock = hasFrontmatter(content);
+				start = findFrontmatterStart(content);
+				end = findFrontmatterEnd(content);
+			} else if (target === "templater") {
+				hasBlock = hasTemplateR(content);
+				start = findTemplateRStart(content);
+				end = findTemplateREnd(content);
+			}
 
-			default:
-				// Unknown target, skip or log
-				break;
-		}
-	}
+console.log("Target:", target, "Has block?", hasBlock, "Start:", start, "End:", end);
+			if (!hasBlock) {
+				// If block not found, fallback logic depending on method
+				if (method === "before" || method === "overwrite") {
+					newContent = template + "\n\n" + newContent;
+				} else if (method === "after") {
+					newContent = newContent + "\n\n" + template;
+				}
+				continue;
+			}
+
+			switch (method) {
+				case "before":
+					newContent = newContent.slice(0, start) + template + "\n" + newContent.slice(start);
+					break;
+				case "after":
+					newContent = newContent.slice(0, end) + "\n" + template + newContent.slice(end);
+					break;
+				case "overwrite":
+					newContent = newContent.slice(0, start) + template + newContent.slice(end);
+					break;
+			}
+}
+
 
 	await this.app.vault.modify(file, newContent);
 }

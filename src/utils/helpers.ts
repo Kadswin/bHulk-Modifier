@@ -1,41 +1,28 @@
 export function hasFrontmatter(content: string): boolean {
-	return hasDelimitedBlock(content, "---");
+	return getDelimitedBlock(content, "---") !== null;
 }
-
-export function findFrontmatterEnd(content: string): number {
-	return findDelimitedBlockEnd(content, "---");
-}
-
-export function findFrontmatterStart(content: string): number {
-	const regex = new RegExp(`^${escape("---")}\\n`);
-	const match = content.match(regex);
-	return match ? match.index ?? 0 : -1;
-}
-
 
 export function hasTemplateR(content: string): boolean {
-	return hasDelimitedBlock(content, "<%");
+	return getDelimitedBlock(content, "<%") !== null;
 }
 
-export function findTemplateREnd(content: string): number {
-	return findDelimitedBlockEnd(content, "%>");
+export function findFrontmatterRange(content: string): [number, number] | null {
+	return getDelimitedBlock(content, "---");
 }
 
-export function findTemplateRStart(content: string): number {
-	const regex = new RegExp(`^${escape("<%")}\\n`);
-	const match = content.match(regex);
-	return match ? match.index ?? 0 : -1;
+export function findTemplateRRange(content: string): [number, number] | null {
+	return getDelimitedBlock(content, "<%");
 }
 
-function hasDelimitedBlock(content: string, delimiter: string): boolean {
-	const regex = new RegExp(`^${escape(delimiter)}\\n[\\s\\S]*?\\n${escape(delimiter)}\\n`);
-	return regex.test(content);
-}
-
-function findDelimitedBlockEnd(content: string, delimiter: string): number {
-	const regex = new RegExp(`^${escape(delimiter)}\\n[\\s\\S]*?\\n${escape(delimiter)}\\n`);
-	const match = content.match(regex);
-	return match ? match[0].length : 0;
+// Generalized block finder
+function getDelimitedBlock(content: string, delimiter: string): [number, number] | null {
+	const escaped = escape(delimiter);
+	const regex = new RegExp(`${escaped}\\s*\\n[\\s\\S]*?\\n\\s*${escaped}`, "gm");
+	const match = regex.exec(content);
+	if (!match) return null;
+	const start = match.index;
+	const end = start + match[0].length;
+	return [start, end];
 }
 
 function escape(str: string): string {
