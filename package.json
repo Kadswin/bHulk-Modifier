@@ -1,5 +1,5 @@
 {
-	"name": "The bHulk Modifier",
+	"name": "the-bhulk-modifier",
 	"version": "1.0.0",
 	"description": "Allows to bulk modify Notes in the vault with TemplateR templates",
 	"main": "main.js",

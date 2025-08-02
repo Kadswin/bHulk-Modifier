@@ -1,9 +1,6 @@
-import ("./styles.css");
 import { Notice, Plugin, TFile } from "obsidian";
 import { hasFrontmatter, findFrontmatterEnd, hasTemplateR, findTemplateREnd } from "./utils/helpers"; //#1.Keep this Update with modifications
-
-import { readFile } from "fs/promises";
-import * as path from "path";
+import { InsertMethod, AffectedBlock, MethodSelection } from "./utils/types"; // Assuming you have a types file for these enums
 
 // --- Basic prompt modal
 import { PromptModal } from "./modals/PromptModal";
@@ -15,29 +12,10 @@ import { FileExcludeSuggestModal } from "./modals/FileExcludeSuggestModal";
 import { FolderSelectModal } from "./modals/FolderSelectModal";
 
 export default class bHulkModifier extends Plugin {
-	private styleEl: HTMLStyleElement | null = null;
-	
-	/** Returns the full path to the plugin's folder */
-	private getPluginFilePath(relativePath: string): string {
-		return path.join(this.manifest.dir, relativePath);
-	}
-
-	/** Loads the CSS file as a string */
-	async loadStyles(): Promise<string> {
-		const fullPath = this.getPluginFilePath("styles.css");
-		return await readFile(fullPath, "utf8");
-	}
-
 	async onload() {
-		// Inject plugin-specific CSS for confirm button margin
-		const css = await this.loadStyles();
-		this.styleEl = document.createElement("style");
-		this.styleEl.textContent = css;
-		document.head.appendChild(this.styleEl); 
-
 		this.addCommand({
 			id: "hulk-bulk-insert-template",
-			name: "Hulk: Bulk Insert Template",
+			name: "Hulk: Bulk Insert Current Template",
 			callback: async () => {
 				const templateFile = this.app.workspace.getActiveFile();
 				if (!templateFile) {
@@ -53,12 +31,22 @@ export default class bHulkModifier extends Plugin {
 				if (!confirmed) return;
 
 //# 4.Add confirm method here?
+				// Prompt for method and target selection using MethodSelectModal
+				const methodSelection = await new Promise<MethodSelection>((resolve) => {
+					new MethodSelectModal(this.app, (result) => resolve(result)).open();
+				});
+
+				if (!methodSelection) {
+					new Notice("⚠️ No method selected, aborting.");
+					return;
+				}
 
 				// Prompt user to select folders
 				const selectedFolders: string[] = await this.promptFolders();
 
 				// Prompt for file exclusions
 				const excludeFilenames = await this.promptExcludeFiles();
+
 
 				// Get all .md files
 				const allFiles = this.app.vault.getMarkdownFiles();
@@ -80,7 +68,7 @@ export default class bHulkModifier extends Plugin {
 					)
 						continue;
 
-					await this.processFile(file, templateContent);
+					await this.processFile(file, templateContent, methodSelection.method, methodSelection.targets);
 					processed++;
 				}
 
@@ -101,29 +89,85 @@ export default class bHulkModifier extends Plugin {
 
 	}
 
-	onunload() {
-		// Remove injected style when plugin unloads
-		if (this.styleEl && this.styleEl.parentElement) {
-			this.styleEl.parentElement.removeChild(this.styleEl);
-		}
-		this.styleEl = null;
+	onunload(): void {
+
 	}
 
-	async processFile(file: TFile, template: string) {
-		const content = await this.app.vault.read(file);
+	async processFile(file: TFile, template: string, method: InsertMethod, targets: AffectedBlock[]) {
+	const content = await this.app.vault.read(file);
+	let newContent = content;
 
-//# 5.here is where I should place the new logic? 
+	// Iterate through selected targets and apply modifications
+	for (const target of targets) {
+		switch (target) {
+			case "frontmatter":
+				if (hasFrontmatter(newContent)) {
+					const insertPos = findFrontmatterEnd(newContent);
+					switch (method) {
+						case "before":
+							newContent = template + "\n" + newContent;
+							break;
+						case "after":
+							newContent = newContent.slice(0, insertPos) + "\n" + template + "\n" + newContent.slice(insertPos);
+							break;
+						case "overwrite":
+							const frontmatterStart = newContent.indexOf("---");
+							newContent =
+								newContent.slice(0, frontmatterStart) +
+								"---\n" +
+								template +
+								"\n---" +
+								newContent.slice(insertPos);
+							break;
+					}
+				} else {
+					// No frontmatter block found, fallback:
+					if (method === "before" || method === "overwrite") {
+						newContent = template + "\n\n" + newContent;
+					} else if (method === "after") {
+						newContent = newContent + "\n\n" + template;
+					}
+				}
+				break;
 
-		if (hasFrontmatter(content)) {
-			const insertPos = findFrontmatterEnd(content);
-			const newContent =
-				content.slice(0, insertPos) + "\n" + template + "\n" + content.slice(insertPos);
-			await this.app.vault.modify(file, newContent);
-		} else {
-			const newContent = template + "\n\n" + content;
-			await this.app.vault.modify(file, newContent);
+			case "templater":
+				if (hasTemplateR(newContent)) {
+					const insertPos = findTemplateREnd(newContent);
+					switch (method) {
+						case "before":
+							newContent = template + "\n" + newContent;
+							break;
+						case "after":
+							newContent = newContent.slice(0, insertPos) + "\n" + template + "\n" + newContent.slice(insertPos);
+							break;
+						case "overwrite":
+							// Overwrite TemplateR block - find start/end positions
+							const templateStart = newContent.indexOf("<%");
+							newContent =
+								newContent.slice(0, templateStart) +
+								template +
+								newContent.slice(insertPos);
+							break;
+					}
+				} else {
+					// No TemplateR block found, fallback:
+					if (method === "before" || method === "overwrite") {
+						newContent = template + "\n\n" + newContent;
+					} else if (method === "after") {
+						newContent = newContent + "\n\n" + template;
+					}
+				}
+				break;
+
+			default:
+				// Unknown target, skip or log
+				break;
 		}
 	}
+
+	await this.app.vault.modify(file, newContent);
+}
+
 
 	async promptUser(promptText: string, placeholder: string = ""): Promise<string> {
 		return new Promise((resolve) => {
